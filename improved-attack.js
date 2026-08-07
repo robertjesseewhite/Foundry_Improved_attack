@@ -38,8 +38,12 @@ function onRenderChatMessage(message, html, data) {
   }
 }
 
-Hooks.on("renderChatMessage", onRenderChatMessage);
-Hooks.on("renderChatMessageHTML", onRenderChatMessage);
+// Register only the appropriate hook based on the Foundry version to avoid duplicate calls and deprecation warnings
+if (game.release && game.release.generation >= 13) {
+  Hooks.on("renderChatMessageHTML", onRenderChatMessage);
+} else {
+  Hooks.on("renderChatMessage", onRenderChatMessage);
+}
 
 /**
  * Handle rolling the attack, checking for critical hits, and automatically rolling damage.

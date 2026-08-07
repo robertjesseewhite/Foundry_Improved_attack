@@ -42,115 +42,51 @@ function onRenderChatMessage(message, html, data) {
 }
 
 /**
- * Handle rolling the attack, checking for critical hits, and automatically rolling damage.
+ * Handle rolling the attack and damage sequentially by triggering the card's native buttons.
  * @param {ChatMessage} message The origin chat message
  * @param {Event} event The click event
  */
 async function rollAttackAndDamage(message, event) {
-  let activity = message.activity;
-  let item = message.item;
+  console.log("Improved Attack & Damage | Triggering combined roll for message:", message.id);
   
-  // Try to find the card and buttons in the DOM from the clicked button event
+  // Locate the parent chat message container in the DOM
   const $btn = $(event.currentTarget);
-  const $card = $btn.closest('.chat-card, .dnd5e.chat-card, .message-content');
+  const $card = $btn.closest('[data-message-id], .chat-message, .message, .chat-card');
+  
+  // Locate the standard ATTACK and DAMAGE buttons on this card
   const attackBtn = $card.find('[data-action*="attack"], [data-action*="Attack"]').not('.improved-attack-damage-btn');
   const damageBtn = $card.find('[data-action*="damage"], [data-action*="Damage"]').not('.improved-attack-damage-btn');
   
-  console.log("Improved Attack & Damage | DOM search results: card =", $card.length, "attackBtn =", attackBtn.length, "damageBtn =", damageBtn.length);
+  if (!attackBtn.length || !damageBtn.length) {
+    ui.notifications.warn("Improved Attack & Damage | Could not locate standard Attack or Damage buttons on this card.");
+    return;
+  }
   
-  // 1. Resolve via DOM data-uuid attributes (extremely robust for modern dnd5e)
-  if (!activity) {
-    const attackUuid = attackBtn.attr("data-uuid") || attackBtn.attr("data-activity-uuid");
-    const damageUuid = damageBtn.attr("data-uuid") || damageBtn.attr("data-activity-uuid");
-    console.log("Improved Attack & Damage | DOM data-uuids: attack =", attackUuid, ", damage =", damageUuid);
-    
-    if (attackUuid) {
-      const doc = await fromUuid(attackUuid);
-      if (doc) {
-        if (doc.type === "attack" || typeof doc.rollAttack === "function") {
-          activity = doc;
-        } else {
-          item = doc;
-        }
-      }
-    }
-    
-    if (!activity && damageUuid) {
-      const doc = await fromUuid(damageUuid);
-      if (doc) {
-        if (doc.type === "attack" || typeof doc.rollAttack === "function") {
-          activity = doc;
-        } else if (!item) {
-          item = doc;
-        }
-      }
-    }
-  }
-
-  // 2. Fallback: retrieve the activity via flags if not resolved yet
-  if (!activity) {
-    const activityUuid = message.getFlag("dnd5e", "activityUuid") || message.flags?.dnd5e?.activityUuid;
-    if (activityUuid) {
-      activity = await fromUuid(activityUuid);
-    }
-  }
-
-  // 3. Fallback: retrieve the item via flags if not resolved yet
-  if (!activity && !item) {
-    const itemUuid = message.getFlag("dnd5e", "itemUuid") || message.flags?.dnd5e?.itemUuid || message.getFlag("dnd5e", "uuid");
-    if (itemUuid) {
-      item = await fromUuid(itemUuid);
-    }
-  }
-
-  // 4. Fallback: find the first attack activity on the item
-  if (!activity && item) {
-    if (item.system.activities) {
-      activity = item.system.activities.find(a => a.type === "attack");
-    } else {
-      activity = item;
-    }
-  }
-
-  if (!activity) {
-    ui.notifications.warn("Improved Attack & Damage | Could not resolve item or activity for this card.");
-    return;
-  }
-
-  // 3. Roll the Attack
-  if (typeof activity.rollAttack !== "function") {
-    ui.notifications.warn("Improved Attack & Damage | This action does not support attack rolls.");
-    return;
-  }
-
-  // Roll the attack (retaining key modifier state like Shift/Alt via event)
-  const attackRolls = await activity.rollAttack({ event });
-  if (!attackRolls) return; // Roll cancelled or aborted
-
-  // Get the main roll from the array or object
-  const roll = Array.isArray(attackRolls) ? attackRolls[0] : attackRolls;
-  if (!roll) return;
-
-  // 4. Check for Critical Hit
-  let isCritical = false;
-  if (typeof roll.isCritical === "boolean") {
-    isCritical = roll.isCritical;
-  } else if (typeof roll.isCritical === "function") {
-    isCritical = roll.isCritical();
-  } else {
-    isCritical = !!roll.isCritical;
-  }
-
-  // 5. Roll the Damage
-  if (typeof activity.rollDamage === "function") {
-    const damageOptions = {
-      event,
-      critical: isCritical,
-      isCritical: isCritical,
-      fastForward: true // Auto roll damage without prompting with a second dialog
-    };
-    await activity.rollDamage(damageOptions);
-  } else {
-    ui.notifications.warn("Improved Attack & Damage | This action does not support damage rolls.");
-  }
+  // 1. Trigger the standard Attack button click
+  console.log("Improved Attack & Damage | Triggering standard Attack button...");
+  const attackMouseEvent = new MouseEvent("click", {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+    altKey: event.altKey,
+    ctrlKey: event.ctrlKey,
+    metaKey: event.metaKey,
+    shiftKey: event.shiftKey
+  });
+  attackBtn[0].dispatchEvent(attackMouseEvent);
+  
+  // 2. Trigger the standard Damage button click after a slight delay
+  setTimeout(() => {
+    console.log("Improved Attack & Damage | Triggering standard Damage button...");
+    const damageMouseEvent = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    });
+    damageBtn[0].dispatchEvent(damageMouseEvent);
+  }, 250);
 }

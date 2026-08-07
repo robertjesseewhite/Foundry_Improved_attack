@@ -9,8 +9,8 @@ function onRenderChatMessage(message, html, data) {
   const $html = (html instanceof HTMLElement) ? $(html) : html;
   
   // Find standard attack and damage elements using case-insensitive wildcard selectors
-  const attackBtn = $html.find('[data-action*="attack" i], [data-action*="Attack"]');
-  const damageBtn = $html.find('[data-action*="damage" i], [data-action*="Damage"]');
+  const attackBtn = $html.find('[data-action*="attack"], [data-action*="Attack"]');
+  const damageBtn = $html.find('[data-action*="damage"], [data-action*="Damage"]');
   
   console.log("Improved Attack & Damage | Elements found: attack =", attackBtn.length, ", damage =", damageBtn.length);
   

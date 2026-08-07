@@ -1,0 +1,11 @@
+/* Styling for the Improved Attack & Damage Roll button */
+
+.dnd5e.chat-card .card-buttons button.improved-attack-damage-btn,
+.improved-attack-damage-btn {
+  margin-top: 4px; /* Slight spacing if container does not use gap */
+}
+
+/* Ensure font-awesome icon has proper spacing */
+.improved-attack-damage-btn i {
+  margin-right: 4px;
+}

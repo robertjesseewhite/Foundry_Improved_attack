@@ -1,0 +1,30 @@
+{
+  "id": "improved-attack",
+  "title": "Improved Attack & Damage Roll",
+  "description": "Adds a third option ('Attack & Damage') to weapon and spell chat cards in the dnd5e system. Automatically rolls damage (and critical damage if the attack is a crit) immediately after the attack roll completes.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "12",
+    "maximum": "13"
+  },
+  "authors": [
+    {
+      "name": "Rob"
+    }
+  ],
+  "esmodules": [
+    "improved-attack.js"
+  ],
+  "styles": [
+    "improved-attack.css"
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system"
+      }
+    ]
+  }
+}

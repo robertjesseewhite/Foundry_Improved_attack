@@ -47,26 +47,31 @@ function onRenderChatMessage(message, html, data) {
  * @param {Event} event The click event
  */
 async function rollAttackAndDamage(message, event) {
-  let activity = null;
+  let activity = message.activity;
+  let item = message.item;
   
-  // 1. Attempt to retrieve the activity via activityUuid
-  const activityUuid = message.getFlag("dnd5e", "activityUuid") || message.flags?.dnd5e?.activityUuid;
-  if (activityUuid) {
-    activity = await fromUuid(activityUuid);
+  // 1. Fallback: retrieve the activity via flags if not resolved directly
+  if (!activity) {
+    const activityUuid = message.getFlag("dnd5e", "activityUuid") || message.flags?.dnd5e?.activityUuid;
+    if (activityUuid) {
+      activity = await fromUuid(activityUuid);
+    }
   }
 
-  // 2. Fallback: retrieve the item and locate its attack activity
-  if (!activity) {
+  // 2. Fallback: retrieve the item via flags if not resolved directly
+  if (!activity && !item) {
     const itemUuid = message.getFlag("dnd5e", "itemUuid") || message.flags?.dnd5e?.itemUuid || message.getFlag("dnd5e", "uuid");
     if (itemUuid) {
-      const item = await fromUuid(itemUuid);
-      if (item) {
-        if (item.system.activities) {
-          activity = item.system.activities.find(a => a.type === "attack");
-        } else {
-          activity = item;
-        }
-      }
+      item = await fromUuid(itemUuid);
+    }
+  }
+
+  // 3. Fallback: find the first attack activity on the item
+  if (!activity && item) {
+    if (item.system.activities) {
+      activity = item.system.activities.find(a => a.type === "attack");
+    } else {
+      activity = item;
     }
   }
 

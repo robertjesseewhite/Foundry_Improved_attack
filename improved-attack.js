@@ -2,8 +2,8 @@ Hooks.once("init", () => {
   console.log("Improved Attack & Damage Roll | Initialized");
 });
 
-Hooks.on("renderChatMessage", (message, html, data) => {
-  // Wrap in jQuery to support both V11/V12 (jQuery object) and V13 (HTMLElement)
+function onRenderChatMessage(message, html, data) {
+  // Wrap in jQuery to support both V11/V12 (jQuery object) and V13/V14 (HTMLElement)
   const $html = (html instanceof HTMLElement) ? $(html) : html;
   
   // Find standard attack and damage buttons
@@ -31,7 +31,10 @@ Hooks.on("renderChatMessage", (message, html, data) => {
       });
     }
   }
-});
+}
+
+Hooks.on("renderChatMessage", onRenderChatMessage);
+Hooks.on("renderChatMessageHTML", onRenderChatMessage);
 
 /**
  * Handle rolling the attack, checking for critical hits, and automatically rolling damage.

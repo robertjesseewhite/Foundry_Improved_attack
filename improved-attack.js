@@ -1,12 +1,8 @@
 Hooks.once("init", () => {
   console.log("Improved Attack & Damage Roll | Initialized");
   
-  // Register only the appropriate hook based on the Foundry version to avoid duplicate calls and deprecation warnings
-  if (game.release && game.release.generation >= 13) {
-    Hooks.on("renderChatMessageHTML", onRenderChatMessage);
-  } else {
-    Hooks.on("renderChatMessage", onRenderChatMessage);
-  }
+  // Register the system-specific hook for dnd5e to ensure buttons persist in activity usage cards
+  Hooks.on("dnd5e.renderChatMessage", onRenderChatMessage);
 });
 
 function onRenderChatMessage(message, html, data) {

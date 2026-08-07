@@ -1,5 +1,12 @@
 Hooks.once("init", () => {
   console.log("Improved Attack & Damage Roll | Initialized");
+  
+  // Register only the appropriate hook based on the Foundry version to avoid duplicate calls and deprecation warnings
+  if (game.release && game.release.generation >= 13) {
+    Hooks.on("renderChatMessageHTML", onRenderChatMessage);
+  } else {
+    Hooks.on("renderChatMessage", onRenderChatMessage);
+  }
 });
 
 function onRenderChatMessage(message, html, data) {
@@ -36,13 +43,6 @@ function onRenderChatMessage(message, html, data) {
       });
     }
   }
-}
-
-// Register only the appropriate hook based on the Foundry version to avoid duplicate calls and deprecation warnings
-if (game.release && game.release.generation >= 13) {
-  Hooks.on("renderChatMessageHTML", onRenderChatMessage);
-} else {
-  Hooks.on("renderChatMessage", onRenderChatMessage);
 }
 
 /**

@@ -11,9 +11,9 @@ function onRenderChatMessage(message, html, data) {
   // Wrap in jQuery to support both V11/V12 (jQuery object) and V13/V14 (HTMLElement)
   const $html = (html instanceof HTMLElement) ? $(html) : html;
   
-  // Find standard attack and damage elements using case-insensitive wildcard selectors
-  const attackBtn = $html.find('[data-action*="attack"], [data-action*="Attack"]');
-  const damageBtn = $html.find('[data-action*="damage"], [data-action*="Damage"]');
+  // Find standard attack and damage elements using wildcard selectors (excluding our custom button)
+  const attackBtn = $html.find('[data-action*="attack"], [data-action*="Attack"]').not('.improved-attack-damage-btn');
+  const damageBtn = $html.find('[data-action*="damage"], [data-action*="Damage"]').not('.improved-attack-damage-btn');
   
   console.log("Improved Attack & Damage | Elements found: attack =", attackBtn.length, ", damage =", damageBtn.length);
   
@@ -50,7 +50,44 @@ async function rollAttackAndDamage(message, event) {
   let activity = message.activity;
   let item = message.item;
   
-  // 1. Fallback: retrieve the activity via flags if not resolved directly
+  // Try to find the card and buttons in the DOM from the clicked button event
+  const $btn = $(event.currentTarget);
+  const $card = $btn.closest('.chat-card, .dnd5e.chat-card, .message-content');
+  const attackBtn = $card.find('[data-action*="attack"], [data-action*="Attack"]').not('.improved-attack-damage-btn');
+  const damageBtn = $card.find('[data-action*="damage"], [data-action*="Damage"]').not('.improved-attack-damage-btn');
+  
+  console.log("Improved Attack & Damage | DOM search results: card =", $card.length, "attackBtn =", attackBtn.length, "damageBtn =", damageBtn.length);
+  
+  // 1. Resolve via DOM data-uuid attributes (extremely robust for modern dnd5e)
+  if (!activity) {
+    const attackUuid = attackBtn.attr("data-uuid") || attackBtn.attr("data-activity-uuid");
+    const damageUuid = damageBtn.attr("data-uuid") || damageBtn.attr("data-activity-uuid");
+    console.log("Improved Attack & Damage | DOM data-uuids: attack =", attackUuid, ", damage =", damageUuid);
+    
+    if (attackUuid) {
+      const doc = await fromUuid(attackUuid);
+      if (doc) {
+        if (doc.type === "attack" || typeof doc.rollAttack === "function") {
+          activity = doc;
+        } else {
+          item = doc;
+        }
+      }
+    }
+    
+    if (!activity && damageUuid) {
+      const doc = await fromUuid(damageUuid);
+      if (doc) {
+        if (doc.type === "attack" || typeof doc.rollAttack === "function") {
+          activity = doc;
+        } else if (!item) {
+          item = doc;
+        }
+      }
+    }
+  }
+
+  // 2. Fallback: retrieve the activity via flags if not resolved yet
   if (!activity) {
     const activityUuid = message.getFlag("dnd5e", "activityUuid") || message.flags?.dnd5e?.activityUuid;
     if (activityUuid) {
@@ -58,7 +95,7 @@ async function rollAttackAndDamage(message, event) {
     }
   }
 
-  // 2. Fallback: retrieve the item via flags if not resolved directly
+  // 3. Fallback: retrieve the item via flags if not resolved yet
   if (!activity && !item) {
     const itemUuid = message.getFlag("dnd5e", "itemUuid") || message.flags?.dnd5e?.itemUuid || message.getFlag("dnd5e", "uuid");
     if (itemUuid) {
@@ -66,7 +103,7 @@ async function rollAttackAndDamage(message, event) {
     }
   }
 
-  // 3. Fallback: find the first attack activity on the item
+  // 4. Fallback: find the first attack activity on the item
   if (!activity && item) {
     if (item.system.activities) {
       activity = item.system.activities.find(a => a.type === "attack");

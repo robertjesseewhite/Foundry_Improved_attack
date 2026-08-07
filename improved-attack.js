@@ -3,16 +3,21 @@ Hooks.once("init", () => {
 });
 
 function onRenderChatMessage(message, html, data) {
+  console.log("Improved Attack & Damage | onRenderChatMessage triggered for message:", message.id);
+  
   // Wrap in jQuery to support both V11/V12 (jQuery object) and V13/V14 (HTMLElement)
   const $html = (html instanceof HTMLElement) ? $(html) : html;
   
-  // Find standard attack and damage buttons
-  const attackBtn = $html.find('button[data-action="rollAttack"], button[data-action="attack"]');
-  const damageBtn = $html.find('button[data-action="rollDamage"], button[data-action="damage"]');
+  // Find standard attack and damage elements using case-insensitive wildcard selectors
+  const attackBtn = $html.find('[data-action*="attack" i], [data-action*="Attack"]');
+  const damageBtn = $html.find('[data-action*="damage" i], [data-action*="Damage"]');
+  
+  console.log("Improved Attack & Damage | Elements found: attack =", attackBtn.length, ", damage =", damageBtn.length);
   
   // If both exist, we add our combined Attack & Damage button
   if (attackBtn.length && damageBtn.length) {
-    if ($html.find('button[data-action="rollAttackAndDamage"]').length === 0) {
+    if ($html.find('[data-action="rollAttackAndDamage"]').length === 0) {
+      console.log("Improved Attack & Damage | Injecting ATTACK & DAMAGE button");
       const newBtn = $(`
         <button data-action="rollAttackAndDamage" class="improved-attack-damage-btn">
           <i class="fa-solid fa-dice-d20"></i> ATTACK & DAMAGE
@@ -26,7 +31,7 @@ function onRenderChatMessage(message, html, data) {
       newBtn.on("click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
-        
+        console.log("Improved Attack & Damage | ATTACK & DAMAGE button clicked");
         await rollAttackAndDamage(message, event);
       });
     }

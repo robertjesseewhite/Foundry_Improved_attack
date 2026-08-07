@@ -62,31 +62,31 @@ async function rollAttackAndDamage(message, event) {
     return;
   }
   
-  // 1. Trigger the standard Attack button click
-  console.log("Improved Attack & Damage | Triggering standard Attack button...");
+  const isAdvantage = event.ctrlKey || event.metaKey;
+  const isDisadvantage = event.altKey;
+
+  // 1. Trigger standard Attack button (fast-forwarded to bypass dialog)
+  console.log("Improved Attack & Damage | Triggering fast-forwarded Attack roll...");
   const attackMouseEvent = new MouseEvent("click", {
     bubbles: true,
     cancelable: true,
     view: window,
-    altKey: event.altKey,
-    ctrlKey: event.ctrlKey,
-    metaKey: event.metaKey,
-    shiftKey: event.shiftKey
+    shiftKey: !isAdvantage && !isDisadvantage, // Fast-forward normal roll
+    altKey: isDisadvantage,                    // Fast-forward disadvantage
+    ctrlKey: isAdvantage,                      // Fast-forward advantage
+    metaKey: isAdvantage
   });
   attackBtn[0].dispatchEvent(attackMouseEvent);
   
-  // 2. Trigger the standard Damage button click after a slight delay
+  // 2. Trigger standard Damage button (fast-forwarded to bypass dialog)
   setTimeout(() => {
-    console.log("Improved Attack & Damage | Triggering standard Damage button...");
+    console.log("Improved Attack & Damage | Triggering fast-forwarded Damage roll...");
     const damageMouseEvent = new MouseEvent("click", {
       bubbles: true,
       cancelable: true,
       view: window,
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
+      shiftKey: true // Fast-forward damage roll without dialog
     });
     damageBtn[0].dispatchEvent(damageMouseEvent);
-  }, 250);
+  }, 300);
 }
